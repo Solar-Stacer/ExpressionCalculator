@@ -1,7 +1,7 @@
 from typing import Any
 
-from __classes_and_functions import *
-from __classes_and_functions import Node
+from ClassesAndFunctions import *
+from ClassesAndFunctions import Node
 
 
 class ParserClass:
@@ -37,7 +37,7 @@ class ParserClass:
             U = X{^U}
             X = I{!}
             I = "(" E ")" | Func "(" [ E {,E} ] ")" | C | N
-            F = FUNCTION
+            Func = FUNCTION
             C = CONSTANT
             N = NUMBER
         """

@@ -1,6 +1,6 @@
-from __lexer import *
-import __classes_and_functions
-from __parser import *
+from ExpLexer import *
+import ClassesAndFunctions
+from ExpParser import *
 
 def help(is_radians: bool = True):
     print("/// EXPRESSION CALCULATOR ///")
@@ -51,10 +51,10 @@ if __name__ == "__main__":
                 help(is_radians)
             elif raw_expression in ["deg", "degree", "degrees"]:
                 print("CHANGED TO DEGREES")
-                __classes_and_functions.is_radians = False
+                ClassesAndFunctions.is_radians = False
             elif raw_expression in ["rad", "radian", "radians"]:
                 print("CHANGED TO RADIANS")
-                __classes_and_functions.is_radians = True
+                ClassesAndFunctions.is_radians = True
             else:
                 lexer = LexerClass(raw_expression)
                 token_list = lexer.tokenize()
