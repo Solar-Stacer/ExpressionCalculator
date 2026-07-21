@@ -6,6 +6,7 @@ from ClassesAndFunctions import Node
 
 class ParserClass:
     def __init__(self, token_list):
+        self.current_token: Token = None
         self._token_list = iter(token_list)
         self.counter = -1
         self.advance()

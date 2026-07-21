@@ -2,6 +2,7 @@ from ClassesAndFunctions import *
 
 class LexerClass(object):
     def __init__(self, raw_exp):
+        self.current_char = ""
         self.expression = iter(raw_exp)
         self.token = []
         self.advance()
@@ -14,7 +15,7 @@ class LexerClass(object):
         except StopIteration:
             self.current_char = None
 
-    def tokenize(self) -> Token:
+    def tokenize(self) -> list[Token]:
         while self.current_char is not None:
             if self.current_char in NUMBERS_LIST:
                 number_buffer = ""

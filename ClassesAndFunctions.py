@@ -1,11 +1,11 @@
-import operator
 from cmath import *
+from enum import Enum
 from math import e, pi, floor, ceil
 from operator import *
-from scipy.special import lambertw, gamma
 from random import randint
-from enum import Enum
 from typing import Callable, Any, Optional
+
+from scipy.special import lambertw, gamma
 
 
 class TokenTypes(Enum):
@@ -31,9 +31,9 @@ class Token:
     After the parsing phase, the AST will have Node objects which will hold actual objects.
     """
 
-    def __init__(self, type, str):
-        self.type = type
-        self.value = str
+    def __init__(self, typ, string):
+        self.type = typ
+        self.value = string
 
     def __str__(self):
         return str(self.type) + " " + "\"" + str(self.value) + "\""
@@ -48,8 +48,8 @@ class Node:
     is either a float, OperatorObject, VariableObject, or FunctionObject.
     """
 
-    def __init__(self, object, *args):
-        self.object = object
+    def __init__(self, obj, *args):
+        self.object = obj
         self.child_nodes = args
 
     def __repr__(self):
@@ -58,7 +58,8 @@ class Node:
         if len(self.child_nodes) == 1:
             return f"Tree({self.object}, {repr(self.child_nodes[0])})"
         else:
-            return f"Tree({self.object}, Tree({", ".join(repr(e) for e in self.child_nodes)}))"
+            return f"Tree({self.object}, Tree({", ".join(repr(element) for element in self.child_nodes)}))"
+
 
 class AggregationNode(Node):
     """
@@ -109,12 +110,12 @@ class OperatorObject:
     The purpose of this object is to be holden to a Node as its Object attribute for evaluation in the AST.
     """
 
-    def __init__(self, sym: str, operator: Callable, is_only_unary: bool,
+    def __init__(self, sym: str, operator_function: Callable, is_only_unary: bool,
                  unary_operator: Optional[Callable[[Any], Any]] = None):
         self.sym = sym
         self.is_only_unary = is_only_unary
         self.unary_operator = unary_operator
-        self.operator = operator
+        self.operator = operator_function
 
     def calc(self, *args):
         if self.is_only_unary:
@@ -126,6 +127,7 @@ class OperatorObject:
                 return self.unary_operator(args[0])
             elif len(args) == 2:
                 return self.operator(*args)
+            return None
 
     def __str__(self):
         return self.sym
@@ -157,7 +159,8 @@ class FunctionObject:
 class AggregationFunctionError(Exception):
     pass
 
-def AST_evaluation(node, sum_var_node=None):
+
+def AST_evaluation(node: Node, sum_var_node: AggregationNode | None = None) -> int | float | None:
     """
     This function evaluates the entire AST by evaluating child nodes (the operands)
     before their parent nodes (the operators). The first argument is the root node
@@ -202,6 +205,8 @@ def AST_evaluation(node, sum_var_node=None):
                 left_val = AST_evaluation(node.child_nodes[0], sum_var_node)
                 right_val = AST_evaluation(node.child_nodes[1], sum_var_node)
                 return node.object.calc(left_val, right_val)
+    return None
+
 
 def factorial(n):
     """
@@ -229,12 +234,17 @@ def product(product_node, var_node, lb_node, ub_node):
     a singleton that consist of a VariableObject attribute. Third and forth
     are lower and upper bound nodes which may or may not have AST.
     """
-    lower_bound = int(AST_evaluation(lb_node))
-    upper_bound = int(AST_evaluation(ub_node))
+    lower_bound = AST_evaluation(lb_node)
+    upper_bound = AST_evaluation(ub_node)
+    if lower_bound is not None and upper_bound is not None:
+        lower_bound = int(lower_bound)
+        upper_bound = int(upper_bound)
+    else:
+        raise AggregationFunctionError("AST_Evaluation returned None.")
 
     if var_node.object.name in VARIABLES_DICT.keys():
         raise AggregationFunctionError(f"The second argument of the summation function cannot be a variable defined "
-                             f"for constants, e.g. {", ".join(VARIABLES_DICT.keys())}")
+                                       f"for constants, e.g. {", ".join(VARIABLES_DICT.keys())}")
 
     if upper_bound < lower_bound:
         raise AggregationFunctionError("Lower bound is more than upper bound.")
@@ -249,6 +259,7 @@ def product(product_node, var_node, lb_node, ub_node):
 
     return result
 
+
 def summation(summand_node, var_node, lb_node, ub_node):
     """
     A function for evaluating summations of summands with all the arguments
@@ -257,12 +268,17 @@ def summation(summand_node, var_node, lb_node, ub_node):
     a singleton that consist of a VariableObject attribute. Third and forth
     are lower and upper bound nodes which may or may not have AST.
     """
-    lower_bound = int(AST_evaluation(lb_node))
-    upper_bound = int(AST_evaluation(ub_node))
+    lower_bound = AST_evaluation(lb_node)
+    upper_bound = AST_evaluation(ub_node)
+    if lower_bound is not None and upper_bound is not None:
+        lower_bound = int(lower_bound)
+        upper_bound = int(upper_bound)
+    else:
+        raise AggregationFunctionError("AST_Evaluation returned None.")
 
     if var_node.object.name in VARIABLES_DICT.keys():
         raise AggregationFunctionError(f"The second argument of the summation function cannot be a variable defined "
-                             f"for constants, e.g. {", ".join(VARIABLES_DICT.keys())}")
+                                       f"for constants, e.g. {", ".join(VARIABLES_DICT.keys())}")
 
     if upper_bound < lower_bound:
         raise AggregationFunctionError("Lower bound is more than upper bound.")
@@ -277,25 +293,30 @@ def summation(summand_node, var_node, lb_node, ub_node):
 
     return result
 
+
 is_radians = True
+
 
 def sine(z):
     if not is_radians:
-        return sin(z * pi/180)
+        return sin(z * pi / 180)
     else:
         return sin(z)
 
+
 def cosine(z):
     if not is_radians:
-        return cos(z * pi/180)
+        return cos(z * pi / 180)
     else:
         return cos(z)
 
+
 def tangent(z):
     if not is_radians:
-        return tan(z * pi/180)
+        return tan(z * pi / 180)
     else:
         return tan(z)
+
 
 def asine(z):
     if not is_radians:
@@ -303,11 +324,13 @@ def asine(z):
     else:
         return asin(z)
 
+
 def acosine(z):
     if not is_radians:
         return acos(z) * 180 / pi
     else:
         return acos(z)
+
 
 def atangent(z):
     if not is_radians:
@@ -315,11 +338,14 @@ def atangent(z):
     else:
         return atan(z)
 
+
 def csc(z):
     return 1 / sine(z)
 
+
 def sec(z):
     return 1 / cosine(z)
+
 
 def cot(z):
     return 1 / tangent(z)
@@ -395,14 +421,14 @@ HELP_DICT = {
     "csc(complex: z)": "Returns the cosecant of z",
     "sec(complex: z)": "Returns the secant of z",
     "cot(complex: z)": "Returns the cotangent of z",
-    "sinh(complex: z)":"Returns the sinh of z",
-    "cosh(complex: z)":"Returns the cosh of z",
-    "tanh(complex: z)":"Returns the tanh of z",
-    "asin(complex: z)":"Returns the asin of z",
-    "acos(complex: z)":"Returns the acos of z",
-    "atan(complex: z)":"Returns the atan of z",
+    "sinh(complex: z)": "Returns the sinh of z",
+    "cosh(complex: z)": "Returns the cosh of z",
+    "tanh(complex: z)": "Returns the tanh of z",
+    "asin(complex: z)": "Returns the asin of z",
+    "acos(complex: z)": "Returns the acos of z",
+    "atan(complex: z)": "Returns the atan of z",
     "max(float n, float n)": "Returns the maximum of two real numbers",
-    "rand(int n, int n)":"Returns the random number between two numbers",
+    "rand(int n, int n)": "Returns the random number between two numbers",
     "exp(complex: z)": "Returns e to the power of z",
     "log(complex: z₁, complex: z₂)": "Returns the logarithm of z₁ to the base z₂",
     "lambertw(complex: z, int: k=0)": "Returns the lambert W function of z with a branche of k which by default is 0.",
