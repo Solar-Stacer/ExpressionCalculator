@@ -62,7 +62,6 @@ if __name__ == "__main__":
                 ast = parser.parse()
                 evaluation = AST_evaluation(ast)
 
-                import rich
                 print("Token Stream:", *token_list, sep="\n\t\t")
                 print("\nAbstract Syntax Tree:\t", str(ast))
                 print("Evaluation:\t\t\t\t", format_result(evaluation))
